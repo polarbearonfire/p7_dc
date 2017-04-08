@@ -30,6 +30,7 @@ public class AdventureView extends View {
     AdventureView aView;
     boolean imagesLoaded;
     XmlManager mXmlManager;
+    boolean touch;
 
     // Used when inflating the view from code
     public AdventureView(Context context) {
@@ -73,15 +74,7 @@ public class AdventureView extends View {
                 } else {
                     rightTouched();
                 }
-
-
-                if (lastLevelRect != null &&
-                        lastLevelRect.intersect(characterX, characterY, characterB.getWidth(), characterB.getHeight())) {
-                    map = mXmlManager.getLastLevel();
-                } else if (nextLevelRect != null &&
-                        nextLevelRect.intersects(characterX, characterY, characterB.getWidth(), characterB.getHeight())) {
-                    map = mXmlManager.getNextLevel();
-                }
+                touch = true;
 
                 invalidate();
             }
@@ -209,11 +202,11 @@ public class AdventureView extends View {
                             canvas.drawBitmap(treasureB, x, y, null);
                             break;
                         case '0':
-                            lastLevelRect = new Rect(x, y, lastLevelB.getWidth(), lastLevelB.getHeight());
+                            lastLevelRect = new Rect(x, y, x + lastLevelB.getWidth(), y + lastLevelB.getHeight());
                             canvas.drawBitmap(lastLevelB, x, y, null);
                             break;
                         case '1':
-                            nextLevelRect = new Rect(x, y, nextLevelB.getWidth(), nextLevelB.getHeight());
+                            nextLevelRect = new Rect(x, y, x + nextLevelB.getWidth(), y + nextLevelB.getHeight());
                             canvas.drawBitmap(nextLevelB, x, y, null);
                             break;
                         default:
@@ -223,9 +216,56 @@ public class AdventureView extends View {
                 }
 
             }
+            if (touch) {
+                if (lastLevelRect != null && lastLevelRect.intersect(
+                        characterX,
+                        characterY,
+                        characterX + characterB.getWidth(),
+                        characterY + characterB.getHeight())) {
+                    map = mXmlManager.getLastLevel();
+                    resetToRight();
+                } else if (nextLevelRect != null && nextLevelRect.intersects(
+                        characterX,
+                        characterY,
+                        characterX + characterB.getWidth(),
+                        characterY + characterB.getHeight())) {
+                    map = mXmlManager.getNextLevel();
+                    resetToNextMap();
+
+                }
+            }
             canvas.drawBitmap(characterB, characterX, characterY, null);
         }
     }
+
+    private void resetToNextMap() {
+
+        for (int i = 0; i < map.size(); i++) {
+            char[] chars = map.get(i);
+            for (int j = 0; j < chars.length; j++) {
+                if (chars[j] == '0') {
+                    characterX = characterB.getWidth() * j + characterB.getWidth();
+                    characterY = characterB.getHeight() * i + characterB.getWidth();
+                }
+            }
+        }
+        mScreenOffsetX = characterB.getWidth();
+        mScreenOffsetY = characterB.getHeight();
+        reset();
+    }
+
+
+    private void resetToRight() {
+
+
+        reset();
+    }
+
+    private void reset() {
+        touch = false;
+        invalidate();
+    }
+
 
     private class ImageLoaderTask extends AsyncTask<Void, Void, Void> {
         @Override
