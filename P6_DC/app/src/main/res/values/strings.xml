@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">P6_DC</string>
+    <string name="app_name">P7_DC</string>
+    <string name="win">Winner!</string>
 </resources>

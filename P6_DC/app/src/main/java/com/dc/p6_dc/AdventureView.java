@@ -12,6 +12,7 @@ import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class AdventureView extends View {
     List<char[]> map;
     private PointF mPlayerCoords;
     private int mBitmapWidth, mScreenOffsetX, mScreenOffsetY, characterX, characterY, mScreenWidth, mScreenHeight;
-    Rect topRect, leftRec, bottomRect, nextLevelRect, lastLevelRect;
+    Rect topRect, leftRec, bottomRect, nextLevelRect, lastLevelRect, winnerRect;
     AdventureView aView;
     boolean imagesLoaded;
     XmlManager mXmlManager;
@@ -199,6 +200,7 @@ public class AdventureView extends View {
                             canvas.drawBitmap(waterB, x, y, null);
                             break;
                         case 't':
+                            winnerRect = new Rect(x, y, x + treasureB.getWidth(), y + treasureB.getHeight());
                             canvas.drawBitmap(treasureB, x, y, null);
                             break;
                         case '0':
@@ -223,27 +225,32 @@ public class AdventureView extends View {
                         characterX + characterB.getWidth(),
                         characterY + characterB.getHeight())) {
                     map = mXmlManager.getLastLevel();
-                    resetToRight();
+                    reset('1');
                 } else if (nextLevelRect != null && nextLevelRect.intersects(
                         characterX,
                         characterY,
                         characterX + characterB.getWidth(),
                         characterY + characterB.getHeight())) {
                     map = mXmlManager.getNextLevel();
-                    resetToNextMap();
-
+                    reset('0');
+                } else if (winnerRect != null && nextLevelRect.intersects(
+                        characterX,
+                        characterY,
+                        characterX + characterB.getWidth(),
+                        characterY + characterB.getHeight())) {
+                    Toast.makeText(this.getContext(), R.string.win, Toast.LENGTH_LONG).show();
                 }
             }
             canvas.drawBitmap(characterB, characterX, characterY, null);
         }
     }
 
-    private void resetToNextMap() {
+    private void reset(char target) {
 
         for (int i = 0; i < map.size(); i++) {
             char[] chars = map.get(i);
             for (int j = 0; j < chars.length; j++) {
-                if (chars[j] == '0') {
+                if (chars[j] == target) {
                     characterX = characterB.getWidth() * j + characterB.getWidth();
                     characterY = characterB.getHeight() * i + characterB.getWidth();
                 }
@@ -251,18 +258,9 @@ public class AdventureView extends View {
         }
         mScreenOffsetX = characterB.getWidth();
         mScreenOffsetY = characterB.getHeight();
-        reset();
-    }
-
-
-    private void resetToRight() {
-
-
-        reset();
-    }
-
-    private void reset() {
         touch = false;
+        lastLevelRect = null;
+        nextLevelRect = null;
         invalidate();
     }
 
