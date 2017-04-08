@@ -219,27 +219,20 @@ public class AdventureView extends View {
 
             }
             if (touch) {
-                if (lastLevelRect != null && lastLevelRect.intersect(
-                        characterX,
+                Rect charRect = new Rect(characterX,
                         characterY,
                         characterX + characterB.getWidth(),
-                        characterY + characterB.getHeight())) {
+                        characterY + characterB.getHeight());
+                if (lastLevelRect != null && lastLevelRect.intersect(charRect)) {
                     map = mXmlManager.getLastLevel();
                     reset('1');
-                } else if (nextLevelRect != null && nextLevelRect.intersects(
-                        characterX,
-                        characterY,
-                        characterX + characterB.getWidth(),
-                        characterY + characterB.getHeight())) {
+                } else if (nextLevelRect != null && nextLevelRect.intersect(charRect)) {
                     map = mXmlManager.getNextLevel();
                     reset('0');
-                } else if (winnerRect != null && nextLevelRect.intersects(
-                        characterX,
-                        characterY,
-                        characterX + characterB.getWidth(),
-                        characterY + characterB.getHeight())) {
+                } else if (winnerRect != null && winnerRect.intersect(charRect)) {
                     Toast.makeText(this.getContext(), R.string.win, Toast.LENGTH_LONG).show();
                 }
+                touch = false;
             }
             canvas.drawBitmap(characterB, characterX, characterY, null);
         }
@@ -258,7 +251,6 @@ public class AdventureView extends View {
         }
         mScreenOffsetX = characterB.getWidth();
         mScreenOffsetY = characterB.getHeight();
-        touch = false;
         lastLevelRect = null;
         nextLevelRect = null;
         invalidate();
