@@ -13,7 +13,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
-import javax.xml.transform.Result;
+import java.util.List;
 
 /**
  * Created by danet on 3/14/2017.
@@ -22,13 +22,14 @@ import javax.xml.transform.Result;
 public class AdventureView extends View {
     Resources resources;
     private Paint mPaint;
-    Bitmap forestB, mountainB, plainsB, characterB, outB, treasureB, waterB;
-    char map[][];
+    Bitmap forestB, mountainB, plainsB, characterB, outB, treasureB, waterB, nextLevelB, lastLevelB;
+    List<char[]> map;
     private PointF mPlayerCoords;
     private int mBitmapWidth, mScreenOffsetX, mScreenOffsetY, characterX, characterY, mScreenWidth, mScreenHeight;
-    Rect topRect, leftRec, bottomRect;
+    Rect topRect, leftRec, bottomRect, nextLevelRect, lastLevelRect;
     AdventureView aView;
     boolean imagesLoaded;
+    XmlManager mXmlManager;
 
     // Used when inflating the view from code
     public AdventureView(Context context) {
@@ -47,30 +48,10 @@ public class AdventureView extends View {
     private void setup() {
         resources = getResources();
         mPaint = new Paint();
+        mXmlManager = new XmlManager(this.getContext());
+        map = mXmlManager.getNextLevel();
 
-        map = new char[][]{
-                {'.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'w', 'w', 'w', '.', '.', '.', '.', '.', '.', '.'},
-                {'~', '~', '~', '~', '~', '~', '~', '~', '~', '~', 'w', 'w', 'w', '.', '.', '.', '.', '.', '.', '.'},
-                {'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                {'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', '.', '.', '.', '.', '.', '.', '.', '.'},
-                {'.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'M', 'M', '.', '.', '.', '.', '.', '.', '.', '.'},
-                {'~', '~', '~', '~', '~', '~', '~', '~', '~', '~', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                {'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', '.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                {'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 't', 'f', 'f', '.', '.', '.', '.', '.', '.', '.', '.'},
-                {'~', '~', '~', '~', '~', '~', '~', '~', '~', '~', 'f', 'f', 'f', '.', '.', '.', '.', '.', '.', '.'},
-                {'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'f', 'f', 'f', 'f', '.', '.', '.', '.', '.', '.'},
-                {'~', '~', '~', '~', '~', '~', '~', '~', '~', '~', 'f', 'f', 'f', 'f', 'f', '.', '.', '.', '.', '.'},
-                {'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', '.', '.', '.', '.'},
-                {'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                {'.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                {'~', '~', '~', '~', '~', '~', '~', '~', '~', '~', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                {'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                {'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 't', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                {'~', '~', '~', '~', '~', '~', '~', '~', '~', '~', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'},
-                {'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.'}
-        };
-
-        mPlayerCoords = new PointF(map.length / 2, map.length / 2);
+        mPlayerCoords = new PointF(map.size() / 2, map.size() / 2);
         mScreenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
         mScreenHeight = Resources.getSystem().getDisplayMetrics().heightPixels;
         topRect = new Rect(0, 0, mScreenWidth, mScreenHeight / 4);
@@ -92,6 +73,16 @@ public class AdventureView extends View {
                 } else {
                     rightTouched();
                 }
+
+
+                if (lastLevelRect != null &&
+                        lastLevelRect.intersect(characterX, characterY, characterB.getWidth(), characterB.getHeight())) {
+                    map = mXmlManager.getLastLevel();
+                } else if (nextLevelRect != null &&
+                        nextLevelRect.intersects(characterX, characterY, characterB.getWidth(), characterB.getHeight())) {
+                    map = mXmlManager.getNextLevel();
+                }
+
                 invalidate();
             }
         }
@@ -115,7 +106,7 @@ public class AdventureView extends View {
 
     private void downTouched() {
         //if player is at bottom of map
-        int limit = -(mBitmapWidth * (map.length - (int) (aView.getHeight() / mBitmapWidth)));
+        int limit = -(mBitmapWidth * (map.size() - (int) (aView.getHeight() / mBitmapWidth)));
         if (characterY + mBitmapWidth >= aView.getBottom() - mBitmapWidth) {
 
             if (mScreenOffsetY >= limit) {
@@ -124,14 +115,14 @@ public class AdventureView extends View {
             if (mScreenOffsetY < limit) {
                 characterY = mBitmapWidth * (int) (aView.getHeight() / mBitmapWidth) - mBitmapWidth * 2;
             }
-        } else if (mScreenOffsetY > limit || characterY < mBitmapWidth * (int) (aView.getHeight() / mBitmapWidth) - mBitmapWidth * 2) {
+        } else if (mScreenOffsetY >= limit || characterY < mBitmapWidth * (int) (aView.getHeight() / mBitmapWidth) - mBitmapWidth * 2) {
             moveDown();
         }
     }
 
     private void rightTouched() {
         //if player is at right of map
-        int limit = -(mBitmapWidth * (map[0].length - (int) (aView.getWidth() / mBitmapWidth)));
+        int limit = -(mBitmapWidth * (map.get(0).length - (int) (aView.getWidth() / mBitmapWidth)));
         if (characterX + mBitmapWidth >= aView.getRight() - mBitmapWidth) {
 
             if (mScreenOffsetX >= limit) {
@@ -140,7 +131,7 @@ public class AdventureView extends View {
             if (mScreenOffsetX < limit) {
                 characterX = mBitmapWidth * (int) (aView.getWidth() / mBitmapWidth) - mBitmapWidth * 2;
             }
-        } else if (mScreenOffsetX > limit || characterX < mBitmapWidth * (int) (aView.getWidth() / mBitmapWidth) - mBitmapWidth * 2) {
+        } else if (mScreenOffsetX >= limit || characterX < mBitmapWidth * (int) (aView.getWidth() / mBitmapWidth) - mBitmapWidth * 2) {
             moveRight();
         }
     }
@@ -200,11 +191,11 @@ public class AdventureView extends View {
             // Fill the background
             canvas.drawPaint(mPaint);
 
-            for (int i = 0; i < map.length; i++) {
-                for (int j = 0; j < map[0].length; j++) {
+            for (int i = 0; i < map.size(); i++) {
+                for (int j = 0; j < map.get(0).length; j++) {
                     int x = j * mBitmapWidth + mScreenOffsetX;
                     int y = i * mBitmapWidth + mScreenOffsetY;
-                    switch (map[i][j]) {
+                    switch (map.get(i)[j]) {
                         case '.':
                             canvas.drawBitmap(plainsB, x, y, null);
                             break;
@@ -216,6 +207,14 @@ public class AdventureView extends View {
                             break;
                         case 't':
                             canvas.drawBitmap(treasureB, x, y, null);
+                            break;
+                        case '0':
+                            lastLevelRect = new Rect(x, y, lastLevelB.getWidth(), lastLevelB.getHeight());
+                            canvas.drawBitmap(lastLevelB, x, y, null);
+                            break;
+                        case '1':
+                            nextLevelRect = new Rect(x, y, nextLevelB.getWidth(), nextLevelB.getHeight());
+                            canvas.drawBitmap(nextLevelB, x, y, null);
                             break;
                         default:
                             canvas.drawBitmap(mountainB, x, y, null);
@@ -235,9 +234,11 @@ public class AdventureView extends View {
             mountainB = BitmapFactory.decodeResource(resources, R.drawable.mountain);
             plainsB = BitmapFactory.decodeResource(resources, R.drawable.plain);
             characterB = BitmapFactory.decodeResource(resources, R.drawable.person);
-            outB = BitmapFactory.decodeResource(resources, R.drawable.out);
+            outB = BitmapFactory.decodeResource(resources, R.drawable.last);
             treasureB = BitmapFactory.decodeResource(resources, R.drawable.treasure);
             waterB = BitmapFactory.decodeResource(resources, R.drawable.water);
+            lastLevelB = BitmapFactory.decodeResource(resources, R.drawable.last);
+            nextLevelB = BitmapFactory.decodeResource(resources, R.drawable.next);
             return null;
         }
 
@@ -251,7 +252,6 @@ public class AdventureView extends View {
             characterX = mBitmapWidth * 5;
             characterY = mBitmapWidth * 5;
         }
-
 
 
     }
