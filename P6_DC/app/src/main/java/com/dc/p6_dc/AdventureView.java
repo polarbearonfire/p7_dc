@@ -139,7 +139,7 @@ public class AdventureView extends View {
             if (mScreenOffsetX > 0) {
                 characterX = mBitmapWidth;
             }
-        } else if (mScreenOffsetX < 0 || characterX >= mBitmapWidth * 2) {
+        } else if (mScreenOffsetX <= 0 || characterX >= mBitmapWidth * 2) {
             moveLeft();
         }
     }
